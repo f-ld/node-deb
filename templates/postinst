@@ -69,7 +69,7 @@ start_service () {
 }
 
 npm_install() {
-  cd "/usr/share/$1/app"
+  cd "{{ install_path }}/$1/app"
   if [ -e 'node_modules' ]; then
     rm -rf 'node_modules'
   fi

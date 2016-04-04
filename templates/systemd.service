@@ -6,8 +6,8 @@ Requires=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/usr/share/{{ node_deb_package_name }}
-ExecStart=/usr/share/{{ node_deb_package_name }}/bin/{{ node_deb_executable_name }}
+WorkingDirectory={{ install_path }}/{{ node_deb_package_name }}
+ExecStart={{ install_path }}/{{ node_deb_package_name }}/bin/{{ node_deb_executable_name }}
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 User={{ node_deb_user }}

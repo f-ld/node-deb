@@ -43,6 +43,7 @@ package_name=
 package_version=
 executable_name=
 start_command=$(jq -r '.node_deb.start_command' package.json)
+install_path=/usr/share
 user=
 group=
 package_description=
@@ -170,6 +171,12 @@ while [ -n "$1" ]; do
     --no-md5sums)
       # HELPDOC: Do not calculate md5sums for DEBIAN directory
       no_md5sums=1
+      ;;
+    --path)
+      # HELPDOC: The path where the application will be installed (default: '/usr/share')
+      zero_check "$value" "$param"
+      install_path="$value"
+      shift
       ;;
     --template-control)
       # HELPDOC: Override Debian control template (default: 'node_deb.templates.control' from package.json then built-in)
@@ -437,8 +444,8 @@ if [ -e "$deb_dir" ]; then rm -rf "$deb_dir"; fi
 log_info 'Making install directories'
 mkdir -p "$deb_dir/DEBIAN" \
          "$deb_dir/etc/$package_name" \
-         "$deb_dir/usr/share/$package_name/app" \
-         "$deb_dir/usr/share/$package_name/bin" \
+         "$deb_dir$install_path/$package_name/app" \
+         "$deb_dir$install_path/$package_name/bin" \
          "$deb_dir/usr/bin"
 
 if [[ "$init" == 'auto' ]] || [[ "$init" == 'upstart' ]]; then
@@ -470,6 +477,7 @@ replace_vars() {
     -e "s/{{ node_deb_group }}/$(escape $group)/g" \
     -e "s/{{ node_deb_init }}/$(escape $init)/g" \
     -e "s/{{ node_deb_version }}/$(escape $node_deb_version)/g" \
+    -e "s/{{ install_path }}/$(escape $install_path)/g" \
   > "$target_file"
   ### END TEMPLATE_VARS ###
 }
@@ -479,7 +487,7 @@ replace_vars "$template_control" "$deb_dir/DEBIAN/control"
 replace_vars "$template_postinst" "$deb_dir/DEBIAN/postinst"
 replace_vars "$template_postrm" "$deb_dir/DEBIAN/postrm"
 replace_vars "$template_prerm" "$deb_dir/DEBIAN/prerm"
-replace_vars "$template_executable" "$deb_dir/usr/share/$package_name/bin/$executable_name"
+replace_vars "$template_executable" "$deb_dir$install_path/$package_name/bin/$executable_name"
 
 if [ "$init" == 'auto' ] || [ "$init" == 'upstart' ]; then
   replace_vars "$template_upstart" "$deb_dir/etc/init/$package_name.conf"
@@ -491,10 +499,10 @@ fi
 
 log_debug 'Templates rendered successfully'
 
-ln -sf "/usr/share/$package_name/bin/$executable_name" "$deb_dir/usr/bin/$executable_name"
+ln -sf "$install_path/$package_name/bin/$executable_name" "$deb_dir/usr/bin/$executable_name"
 
 chmod -R 0755 "$deb_dir/DEBIAN/" \
-              "$deb_dir/usr/share/$package_name/bin/$executable_name"
+              "$deb_dir$install_path/$package_name/bin/$executable_name"
 
 # Copy all files into temporary Debian dir
 log_info 'Recursively copying files into Debian directory'
@@ -505,23 +513,23 @@ find "$@" -maxdepth 0 -print0 | {
     if [[ "$file" == *node_modules* ]]; then
       log_warn "Skipping file $file because 'npm install' is now run when the Debian package is installed."
     else
-      rsync -rRq "$file" "$deb_dir/usr/share/$package_name/app/"
+      rsync -rRq "$file" "$deb_dir$install_path/$package_name/app/"
     fi
   done
 }
 
 # TODO ? remove this in a future release
-if ! [ -f "$deb_dir/usr/share/$package_name/app/package.json" ]; then
+if ! [ -f "$deb_dir$install_path/$package_name/app/package.json" ]; then
   log_warn "Including 'package.json' in the Debian package as it is needed for installing the .deb." \
     "You can suppress this message by adding 'package.json' to the list of files on the command line."
-  cp './package.json' "$deb_dir/usr/share/$package_name/app/"
+  cp './package.json' "$deb_dir$install_path/$package_name/app/"
 fi
 
 # TODO ? remove this in a future release
-if [ -f './npm-shrinkwrap.json' ] && ! [ -f "$deb_dir/usr/share/$package_name/app/npm-shrinkwrap.json" ]; then
+if [ -f './npm-shrinkwrap.json' ] && ! [ -f "$deb_dir$install_path/$package_name/app/npm-shrinkwrap.json" ]; then
   log_warn "Including 'npm-shrinkwrap.json' in the Debian package as it is needed for installing the .deb." \
     "You can suppress this message by adding 'npm-shrinkwrap.json' to the list of files on the command line."
-  cp './npm-shrinkwrap.json' "$deb_dir/usr/share/$package_name/app/"
+  cp './npm-shrinkwrap.json' "$deb_dir$install_path/$package_name/app/"
 fi
 
 # Calculate md5sums
