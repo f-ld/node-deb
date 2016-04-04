@@ -477,6 +477,7 @@ replace_vars() {
     -e "s/{{ node_deb_group }}/$(escape $group)/g" \
     -e "s/{{ node_deb_init }}/$(escape $init)/g" \
     -e "s/{{ node_deb_version }}/$(escape $node_deb_version)/g" \
+    -e "s/{{ install_path }}/$(escape $install_path)/g" \
   > "$target_file"
   ### END TEMPLATE_VARS ###
 }
