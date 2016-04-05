@@ -46,6 +46,8 @@ shutdown_name=
 start_command=$(jq -r '.node_deb.start_command' package.json)
 stop_command=$(jq -r '.node_deb.stop_command' package.json)
 install_path=/usr/share
+distribution=stable
+urgency=low
 user=
 group=
 package_description=
@@ -115,13 +117,19 @@ while [ -n "$1" ]; do
       package_description="$value"
       shift
       ;;
+    --distribution)
+      # HELPDOC: The package distribution defined in the changes file (default: 'stable')
+      zero_check "$value" "$param"
+      distribution="$value"
+      shift
+      ;;
     -e | --executable-name)
       # HELPDOC: The name of the executable (default: 'node_deb.executable_name' from package.json then $package-name)
       zero_check "$value" "$param"
       executable_name="$value"
       shift
       ;;
-    -e | --shutdown-name)
+    -s | --shutdown-name)
       # HELPDOC: The name of the shutdown executable (default: 'node_deb.shutdown_name' from package.json then shutdown)
       zero_check "$value" "$param"
       shutdown_name="$value"
@@ -186,6 +194,12 @@ while [ -n "$1" ]; do
       install_path="$value"
       shift
       ;;
+    --template-changes)
+      # HELPDOC: Override Debian package changes template (default: 'node_deb.templates.changes' from package.json then built-in)
+      zero_check "$value" "$param"
+      template_changes="$param"
+      shift
+      ;;
     --template-control)
       # HELPDOC: Override Debian control template (default: 'node_deb.templates.control' from package.json then built-in)
       zero_check "$value" "$param"
@@ -228,16 +242,22 @@ while [ -n "$1" ]; do
       template_systemd="$param"
       shift
       ;;
+    --template-sysv-conf)
+      # HELPDOC: Override System V conf template (default: 'node_deb.templates.sysv_conf' from package.json then built-in)
+      zero_check "$value" "$param"
+      template_sysv="$param"
+      shift
+      ;;
     --template-upstart-conf)
       # HELPDOC: Override upstart conf template (default: 'node_deb.templates.upstart_conf' from package.json then built-in)
       zero_check "$value" "$param"
       template_upstart="$param"
       shift
       ;;
-    --template-sysv-conf)
-      # HELPDOC: Override System V conf template (default: 'node_deb.templates.sysv_conf' from package.json then built-in)
+    --urgency)
+      # HELPDOC: The package urgency defined in the changes file (default: 'low')
       zero_check "$value" "$param"
-      template_sysv="$param"
+      urgency="$value"
       shift
       ;;
     -u | --user)
@@ -395,6 +415,16 @@ if [ "$stop_command" == 'null' ]; then
 fi
 log_debug "The stop command has been set to: $stop_command"
 
+# Set changes template
+if [ -z "$template_changes" ]; then
+  temp_template_changes=$(jq -r '.node_deb.templates.changes' package.json)
+  if [[ "$temp_template_changes" == 'null' ]]; then
+    template_changes=''
+  fi
+fi
+: ${template_changes:="$node_deb_dir/templates/changes"}
+log_debug "The changes template has been set to: $template_changes"
+
 # Set control template
 if [ -z "$template_control" ]; then
   temp_template_control=$(jq -r '.node_deb.templates.control' package.json)
@@ -542,7 +572,9 @@ replace_vars() {
     -e "s/{{ node_deb_group }}/$(escape $group)/g" \
     -e "s/{{ node_deb_init }}/$(escape $init)/g" \
     -e "s/{{ node_deb_version }}/$(escape $node_deb_version)/g" \
-    -e "s/{{ install_path }}/$(escape $install_path)/g" \
+    -e "s/{{ node_deb_install_path }}/$(escape $install_path)/g" \
+    -e "s/{{ node_deb_package_distribution }}/$(escape $distribution)/g" \
+    -e "s/{{ node_deb_package_urgency }}/$(escape $urgency)/g" \
   > "$target_file"
   ### END TEMPLATE_VARS ###
 }
@@ -629,4 +661,35 @@ fi
 
 log_info 'Building Debian package'
 dpkg-deb --build "$deb_dir" > '/dev/null'
+
+# Manage changes file
+build_changes() {
+  declare -r template="$1"
+  declare -r changes_file="$2"
+  declare -r deb_archive="$3"
+  
+  declare -r changes_temp=$(mktemp)
+  
+  replace_vars "$template" "$changes_temp"
+
+  declare -r generation_date=$(date -R)
+  declare -r package_sha1=$(sha1sum $deb_archive | cut -d " " -f 1)
+  declare -r package_sha256=$(sha256sum $deb_archive | cut -d " " -f 1)
+  declare -r package_md5=$(md5sum $deb_archive | cut -d " " -f 1)
+  declare -r package_size=$(stat --printf="%s" $deb_archive)
+  
+  sed < "$changes_temp" \
+    -e "s/{{ node_deb_generation_date }}/$(escape $generation_date)/g" \
+    -e "s/{{ node_deb_package_deb }}/$(escape $deb_archive)/g" \
+    -e "s/{{ node_deb_package_sha1 }}/$(escape $package_sha1)/g" \
+    -e "s/{{ node_deb_package_sha256 }}/$(escape $package_sha256)/g" \
+    -e "s/{{ node_deb_package_md5 }}/$(escape $package_md5)/g" \
+    -e "s/{{ node_deb_package_size }}/$(escape $package_size)/g" \
+  > "$changes_file"
+
+  rm "$changes_temp"
+}
+
+log_info 'Building changes'
+build_changes "$template_changes" "${deb_dir}.changes" "${deb_dir}.deb"
 log_info 'Success.'

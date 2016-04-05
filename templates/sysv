@@ -12,7 +12,7 @@
 # Description:       {{ node_deb_package_description }}
 ### END INIT INFO
 
-DAEMON_DIR={{ install_path }}/{{ node_deb_package_name }}
+DAEMON_DIR={{ node_deb_install_path }}/{{ node_deb_package_name }}
 DAEMON_USER={{ node_deb_user }}
 
 SU=/bin/su
