@@ -1,11 +1,14 @@
 # CHANGELOG
 
+#### 0.1.12 - 2016-04-05
+  - Support for the creation of a .changes files together with the .deb package (to use with mini-dinstall debian package repository)
+  - Updated doc after first publish
+
 #### 0.1.11 - 2016-04-05
 - Forked from https://github.com/heartsucker/node-deb
 - Added
   - Support for custom install path using the --path option
   - Support for basic System V init script (see --init sysv) + custom stop command (used only for system v)
-  - Support for the creation of a .changes files together with the .deb package (to use with mini-dinstall debian package repository)
 
 #### 0.1.10 - 2016-03-09
 - Changed
