@@ -1,11 +1,13 @@
 # node-deb
 
+For of node-dev by heartsucker (https://github.com/heartsucker/node-deb) to get some new features quickly.
+This wont be maintained and will be proposed for merge into the main project.
 Debian packaging for Node.js projects written 100% in `bash`.
 
 Simple.
 
 ## Installation
-`npm install node-deb`
+`npm install node-deb-pkg`
 
 ## Compatibility
 
