@@ -1,8 +1,8 @@
 {
-  "name": "node-deb",
+  "name": "node-deb-pkg",
   "version": "0.1.11",
-  "description": "Debian packaging for Node.js projects",
-  "author": "heartsucker <ehartsuyker@gmail.com>",
+  "description": "Debian packaging for Node.js projects, fork of node-deb (https://github.com/heartsucker/node-deb) with additional features. Not intended to be maintained (but maybe merged one day)",
+  "author": "fabien (https://github.com/f-ld)",
   "bin": {
     "node-deb": "./node-deb"
   },
@@ -12,10 +12,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/heartsucker/node-deb.git"
+    "url": "git+https://github.com/f-ld/node-deb.git"
   },
   "bugs": {
-    "url": "https://github.com/heartsucker/node-deb/issues"
+    "url": "https://github.com/f-ld/node-deb/issues"
   },
   "keywords": [
     "debian",
@@ -31,7 +31,7 @@
   "preferGlobal": true,
   "private": false,
   "license": "MIT",
-  "homepage": "https://github.com/heartsucker/node-deb",
+  "homepage": "https://github.com/f-ld/node-deb",
   "node_deb": {
     "init": "none"
   }
