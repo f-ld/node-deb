@@ -13,9 +13,9 @@
 ### END INIT INFO
 
 DAEMON_DIR={{ install_path }}/{{ node_deb_package_name }}
-
 DAEMON_USER={{ node_deb_user }}
 
+SU=/bin/su
 
 . /lib/lsb/init-functions
 

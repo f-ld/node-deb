@@ -122,7 +122,7 @@ while [ -n "$1" ]; do
       shift
       ;;
     -e | --shutdown-name)
-      # HELPDOC: The name of the shutdown executable (default: 'node_deb.shutdown_name' from package.json then $package-name)
+      # HELPDOC: The name of the shutdown executable (default: 'node_deb.shutdown_name' from package.json then shutdown)
       zero_check "$value" "$param"
       shutdown_name="$value"
       shift
@@ -339,7 +339,7 @@ log_debug "The executable name has been set to: $executable_name"
 if [ -z "$shutdown_name" ]; then
   shutdown_name=$(jq -r '.node_deb.shutdown_name' package.json)
   if [[ "$shutdown_name" == 'null' ]]; then
-    shutdown_name="$package_name"
+    shutdown_name="shutdown"
   fi
 fi
 log_debug "The shutdown executable name has been set to: $shutdown_name"

@@ -85,6 +85,7 @@ if ! [ -d '/var/log/{{ node_deb_package_name }}' ]; then
 fi
 
 chown -R '{{ node_deb_user }}:{{ node_deb_group }}' '/var/log/{{ node_deb_package_name }}'
+chown -R '{{ node_deb_user }}:{{ node_deb_group }}' '{{ install_path }}'
 
 if [[ "$init_type" == 'auto' ]] || [[ "$init_type" == 'systemd' ]] || [[ "$init_type" == 'upstart' ]] || [[ "$init_type" == 'sysv' ]]; then
   start_service '{{ node_deb_package_name }}'
