@@ -42,7 +42,9 @@ log_warn() {
 package_name=
 package_version=
 executable_name=
+shutdown_name=
 start_command=$(jq -r '.node_deb.start_command' package.json)
+stop_command=$(jq -r '.node_deb.stop_command' package.json)
 install_path=/usr/share
 user=
 group=
@@ -119,6 +121,12 @@ while [ -n "$1" ]; do
       executable_name="$value"
       shift
       ;;
+    -e | --shutdown-name)
+      # HELPDOC: The name of the shutdown executable (default: 'node_deb.shutdown_name' from package.json then shutdown)
+      zero_check "$value" "$param"
+      shutdown_name="$value"
+      shift
+      ;;
     -g | --group)
       # HELPDOC:  The Unix group the process will run as (default: 'node_deb.group' from package.json then $user)
       zero_check "$value" "$param"
@@ -131,7 +139,7 @@ while [ -n "$1" ]; do
       exit 0
       ;;
     -i | --init)
-      # HELPDOC: Init script type {auto, upstart, systemd, none}. 'auto' chooses upstart or systemd. 'none' makes no init script. (default: 'node_deb.init' from package.json then 'auto')
+      # HELPDOC: Init script type {auto, upstart, systemd, sysv, none}. 'auto' chooses upstart or systemd. 'none' makes no init script. (default: 'node_deb.init' from package.json then 'auto')
       zero_check "$value" "$param"
       init="$value"
       shift
@@ -190,6 +198,12 @@ while [ -n "$1" ]; do
       template_executable="$param"
       shift
       ;;
+    --template-shutdown)
+      # HELPDOC: Override shutdown executable template (default: 'node_deb.templates.shutdown' from package.json then built-in)
+      zero_check "$value" "$param"
+      template_shutdown="$param"
+      shift
+      ;;
     --template-postinst)
       # HELPDOC: Override maintainer script postinst template (default: 'node_deb.templates.postinst' from package.json then built-in)
       zero_check "$value" "$param"
@@ -218,6 +232,12 @@ while [ -n "$1" ]; do
       # HELPDOC: Override upstart conf template (default: 'node_deb.templates.upstart_conf' from package.json then built-in)
       zero_check "$value" "$param"
       template_upstart="$param"
+      shift
+      ;;
+    --template-sysv-conf)
+      # HELPDOC: Override System V conf template (default: 'node_deb.templates.sysv_conf' from package.json then built-in)
+      zero_check "$value" "$param"
+      template_sysv="$param"
       shift
       ;;
     -u | --user)
@@ -315,6 +335,15 @@ if [ -z "$executable_name" ]; then
 fi
 log_debug "The executable name has been set to: $executable_name"
 
+# Set shutdown name
+if [ -z "$shutdown_name" ]; then
+  shutdown_name=$(jq -r '.node_deb.shutdown_name' package.json)
+  if [[ "$shutdown_name" == 'null' ]]; then
+    shutdown_name="shutdown"
+  fi
+fi
+log_debug "The shutdown executable name has been set to: $shutdown_name"
+
 # Set start command
 if [ "$start_command" == 'null' ]; then
   start_command=$(jq -r '.scripts.start' package.json)
@@ -350,12 +379,21 @@ if [ -z "$init" ]; then
   fi
 fi
 case $init in
-  auto|upstart|systemd|none)
+  auto|upstart|systemd|sysv|none)
     ;;
   *)
-    die "Invalid init type: $init. Must be 'auto', 'upstart', 'systemd', or 'none'"
+    die "Invalid init type: $init. Must be 'auto', 'upstart', 'systemd', 'sysv' or 'none'"
 esac
 log_debug "The init type has been set to: $init"
+
+# Set stop command
+if [ "$stop_command" == 'null' ]; then
+  stop_command=$(jq -r '.scripts.stop' package.json)
+  if [[ "$stop_command" == 'null' ]] && [[ "$init" == "sysv" ]] ; then
+    die 'For system V init, your package.json must have element "node_deb.stop_command" or "scripts.stop"'
+  fi
+fi
+log_debug "The stop command has been set to: $stop_command"
 
 # Set control template
 if [ -z "$template_control" ]; then
@@ -376,6 +414,16 @@ if [ -z "$template_executable" ]; then
 fi
 : ${template_executable:="$node_deb_dir/templates/executable"}
 log_debug "The executable template has been set to: $template_executable"
+
+# Set shutdown template
+if [ -z "$template_shutdown" ]; then
+  template_shutdown=$(jq -r '.node_deb.templates.shutdown' package.json)
+  if [[ "$template_shutdown" == 'null' ]]; then
+    template_shutdown=''
+  fi
+fi
+: ${template_shutdown:="$node_deb_dir/templates/shutdown"}
+log_debug "The shutdown executable template has been set to: $template_shutdown"
 
 # Set postinst template
 if [ -z "$template_postinst" ]; then
@@ -427,6 +475,16 @@ fi
 : ${template_upstart:="$node_deb_dir/templates/upstart.conf"}
 log_debug "The upstart template has been set to: $template_prerm"
 
+# Set sysv conf template
+if [ -z "$template_sysv" ]; then
+  template_sysv=$(jq -r '.node_deb.templates.sysv_conf' package.json)
+  if [[ "$template_sysv" == 'null' ]]; then
+    template_sysv=''
+  fi
+fi
+: ${template_sysv:="$node_deb_dir/templates/sysv"}
+log_debug "The sysv template has been set to: $template_prerm"
+
 deb_dir="${package_name}_${package_version}_all"
 
 finish() {
@@ -456,6 +514,10 @@ if [[ "$init" == 'auto' ]] || [[ "$init" == 'systemd' ]]; then
   mkdir -p "$deb_dir/etc/systemd/system"
 fi
 
+if [[ "$init" == 'sysv' ]]; then
+  mkdir -p "$deb_dir/etc/init.d"
+fi
+
 escape() {
   sed -e 's/[]\/$*.^|[]/\\&/g' -e 's/&/\\&/g' <<< "$@"
 }
@@ -469,8 +531,11 @@ replace_vars() {
     -e "s/{{ node_deb_package_name }}/$(escape $package_name)/g" \
     -e "s/{{ node_deb_app_command }}/$(escape $app_command)/g" \
     -e "s/{{ node_deb_executable_name }}/$(escape $executable_name)/g" \
+    -e "s/{{ node_deb_shutdown_name }}/$(escape $shutdown_name)/g" \
     -e "s/{{ node_deb_package_version }}/$(escape $package_version)/g" \
     -e "s/{{ node_deb_start_command }}/$(escape $start_command)/g" \
+    -e "s/{{ node_deb_stop_command }}/$(escape $stop_command)/g" \
+    -e "s/{{ node_deb_stop_command }}/$(escape $stop_command)/g" \
     -e "s/{{ node_deb_package_description }}/$(escape $package_description)/g" \
     -e "s/{{ node_deb_package_maintainer }}/$(escape $package_maintainer)/g" \
     -e "s/{{ node_deb_user }}/$(escape $user)/g" \
@@ -488,6 +553,7 @@ replace_vars "$template_postinst" "$deb_dir/DEBIAN/postinst"
 replace_vars "$template_postrm" "$deb_dir/DEBIAN/postrm"
 replace_vars "$template_prerm" "$deb_dir/DEBIAN/prerm"
 replace_vars "$template_executable" "$deb_dir$install_path/$package_name/bin/$executable_name"
+replace_vars "$template_shutdown" "$deb_dir$install_path/$package_name/bin/$shutdown_name"
 
 if [ "$init" == 'auto' ] || [ "$init" == 'upstart' ]; then
   replace_vars "$template_upstart" "$deb_dir/etc/init/$package_name.conf"
@@ -497,12 +563,19 @@ if [ "$init" == 'auto' ] || [ "$init" == 'systemd' ]; then
   replace_vars "$template_systemd" "$deb_dir/etc/systemd/system/$package_name.service"
 fi
 
+if [ "$init" == 'sysv' ]; then
+  replace_vars "$template_sysv" "$deb_dir/etc/init.d/$package_name"
+  chmod +x "$deb_dir/etc/init.d/$package_name"  
+fi
+
 log_debug 'Templates rendered successfully'
 
 ln -sf "$install_path/$package_name/bin/$executable_name" "$deb_dir/usr/bin/$executable_name"
+ln -sf "$install_path/$package_name/bin/$shutdown_name" "$deb_dir/usr/bin/$shutdown_name"
 
 chmod -R 0755 "$deb_dir/DEBIAN/" \
-              "$deb_dir$install_path/$package_name/bin/$executable_name"
+              "$deb_dir$install_path/$package_name/bin/$executable_name" \
+              "$deb_dir$install_path/$package_name/bin/$shutdown_name"
 
 # Copy all files into temporary Debian dir
 log_info 'Recursively copying files into Debian directory'
