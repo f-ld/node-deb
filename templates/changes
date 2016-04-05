@@ -1,0 +1,20 @@
+Format: 1.8
+Date: {{ node_deb_generation_date }}
+Source: {{ node_deb_package_name }}
+Binary: {{ node_deb_package_name }}
+Architecture: all
+Version: {{ node_deb_package_version }}
+Distribution: {{ node_deb_package_distribution }}
+Urgency: {{ node_deb_package_urgency }}
+Maintainer: {{ node_deb_package_maintainer }}
+Changed-By: {{ node_deb_package_maintainer }}
+Description:
+ {{ node_deb_package_name }} - {{ node_deb_package_description }}
+Changes:
+ {{ node_deb_package_name }} ({{ node_deb_package_version }}) {{ node_deb_package_distribution }}; urgency={{ node_deb_package_urgency }}
+Checksums-Sha1:
+ {{ node_deb_package_sha1 }} {{ node_deb_package_size }} {{ node_deb_package_deb }}
+Checksums-Sha256:
+ {{ node_deb_package_sha256 }} {{ node_deb_package_size }} {{ node_deb_package_deb }}
+Files:
+ {{ node_deb_package_md5 }} {{ node_deb_package_size }} utils standard {{ node_deb_package_deb }}
