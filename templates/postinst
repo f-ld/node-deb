@@ -3,6 +3,7 @@
 set -e
 
 init_type='{{ node_deb_init }}'
+no_auto_start_stop='{{ node_deb_no_auto_start_stop }}'
 
 die() {
   echo "$@" >&2
@@ -87,6 +88,8 @@ fi
 chown -R '{{ node_deb_user }}:{{ node_deb_group }}' '/var/log/{{ node_deb_package_name }}'
 chown -R '{{ node_deb_user }}:{{ node_deb_group }}' '{{ node_deb_install_path }}'
 
-if [[ "$init_type" == 'auto' ]] || [[ "$init_type" == 'systemd' ]] || [[ "$init_type" == 'upstart' ]] || [[ "$init_type" == 'sysv' ]]; then
-  start_service '{{ node_deb_package_name }}'
+if [[ ! no_auto_start_stop ]]; then
+  if [[ "$init_type" == 'auto' ]] || [[ "$init_type" == 'systemd' ]] || [[ "$init_type" == 'upstart' ]] || [[ "$init_type" == 'sysv' ]]; then
+    start_service '{{ node_deb_package_name }}'
+  fi
 fi

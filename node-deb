@@ -50,6 +50,7 @@ distribution=stable
 urgency=low
 user=
 group=
+no_auto_start_stop=0
 package_description=
 package_maintainer=
 node_deb_version=$(jq -r '.version' "$node_deb_dir/package.json")
@@ -179,6 +180,10 @@ while [ -n "$1" ]; do
       zero_check "$value" "$param"
       package_name="$value"
       shift
+      ;;
+    --no-auto-start-stop)
+      # HELPDOC: Do not automatically start/stop the service when installing/removing the package (assume the operator will do it)
+      no_auto_start_stop=1
       ;;
     --no-delete-temp)
       # HELPDOC: Do not delete temp directory used to build Debian package
@@ -575,6 +580,7 @@ replace_vars() {
     -e "s/{{ node_deb_install_path }}/$(escape $install_path)/g" \
     -e "s/{{ node_deb_package_distribution }}/$(escape $distribution)/g" \
     -e "s/{{ node_deb_package_urgency }}/$(escape $urgency)/g" \
+    -e "s/{{ node_deb_no_auto_start_stop }}/$(escape $no_auto_start_stop)/g" \
   > "$target_file"
   ### END TEMPLATE_VARS ###
 }

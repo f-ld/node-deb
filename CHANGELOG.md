@@ -1,5 +1,11 @@
 # CHANGELOG
 
+#### 0.1.14 - 2016-04-06
+  - Support for -no-auto-start-stop option to avoid starting / stopping the service automatically on install / remove (Assuming operator will do it)
+
+#### 0.1.13 - 2016-04-05
+  - Fixes
+
 #### 0.1.12 - 2016-04-05
   - Support for the creation of a .changes files together with the .deb package (to use with mini-dinstall debian package repository)
   - Updated doc after first publish
