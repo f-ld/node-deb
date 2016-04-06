@@ -3,6 +3,7 @@
 set -e
 
 init_type='{{ node_deb_init }}'
+no_auto_start_stop='{{ node_deb_no_auto_start_stop }}'
 service_name='{{ node_deb_package_name }}'
 
 die() {
@@ -10,18 +11,20 @@ die() {
   exit 1
 }
 
-if hash service 2> /dev/null; then
-  if [[ "$init_type" == 'auto' || "$init_type" == 'upstart' || "$init_type" == 'sysv' ]]; then
-    service "$service_name" stop || echo "$service_name wasn't even running!"
+if [[ ! no_auto_start_stop ]]; then
+  if hash service 2> /dev/null; then
+    if [[ "$init_type" == 'auto' || "$init_type" == 'upstart' || "$init_type" == 'sysv' ]]; then
+      service "$service_name" stop || echo "$service_name wasn't even running!"
+    fi
+  elif hash stop 2> /dev/null; then
+    if [[ "$init_type" == 'auto' || "$init_type" == 'upstart' ]]; then
+      stop "$service_name" || echo "$service_name wasn't even running!"
+    fi
+  elif hash systemctl 2> /dev/null; then
+    if [[ "$init_type" == 'auto' || "$init_type" == 'systemd' ]]; then
+      systemctl disable "$service_name.service" || echo "$service_name wasn't even running!"
+    fi
+  else
+    die "Your system does not appear to use upstart, systemd or sysv, so $service_name could not be stopped"
   fi
-elif hash stop 2> /dev/null; then
-  if [[ "$init_type" == 'auto' || "$init_type" == 'upstart' ]]; then
-    stop "$service_name" || echo "$service_name wasn't even running!"
-  fi
-elif hash systemctl 2> /dev/null; then
-  if [[ "$init_type" == 'auto' || "$init_type" == 'systemd' ]]; then
-    systemctl disable "$service_name.service" || echo "$service_name wasn't even running!"
-  fi
-else
-  die "Your system does not appear to use upstart, systemd or sysv, so $service_name could not be stopped"
 fi
