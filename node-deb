@@ -202,67 +202,67 @@ while [ -n "$1" ]; do
     --template-changes)
       # HELPDOC: Override Debian package changes template (default: 'node_deb.templates.changes' from package.json then built-in)
       zero_check "$value" "$param"
-      template_changes="$param"
+      template_changes="$value"
       shift
       ;;
     --template-control)
       # HELPDOC: Override Debian control template (default: 'node_deb.templates.control' from package.json then built-in)
       zero_check "$value" "$param"
-      template_control="$param"
+      template_control="$value"
       shift
       ;;
     --template-executable)
       # HELPDOC: Override executable template (default: 'node_deb.templates.executable' from package.json then built-in)
       zero_check "$value" "$param"
-      template_executable="$param"
+      template_executable="$value"
       shift
       ;;
     --template-shutdown)
       # HELPDOC: Override shutdown executable template (default: 'node_deb.templates.shutdown' from package.json then built-in)
       zero_check "$value" "$param"
-      template_shutdown="$param"
+      template_shutdown="$value"
       shift
       ;;
     --template-postinst)
       # HELPDOC: Override maintainer script postinst template (default: 'node_deb.templates.postinst' from package.json then built-in)
       zero_check "$value" "$param"
-      template_postinst="$param"
+      template_postinst="$value"
       shift
       ;;
     --template-postrm)
       # HELPDOC: Override maintainer script postrm template (default: 'node_deb.templates.postrm' from package.json then built-in)
       zero_check "$value" "$param"
-      template_postrm="$param"
+      template_postrm="$value"
       shift
       ;;
     --template-preinst)
       # HELPDOC: Override maintainer script preinst template (default: 'node_deb.templates.preinst' from package.json then built-in)
       zero_check "$value" "$param"
-      template_preinst="$param"
+      template_preinst="$value"
       shift
       ;;
     --template-prerm)
       # HELPDOC: Override maintainer script prerm template (default: 'node_deb.templates.prem' from package.json then built-in)
       zero_check "$value" "$param"
-      template_prerm="$param"
+      template_prerm="$value"
       shift
       ;;
     --template-systemd-service)
       # HELPDOC: Override systemd unit template (default: 'node_deb.templates.systemd_service' from package.json then built-in)
       zero_check "$value" "$param"
-      template_systemd="$param"
+      template_systemd="$value"
       shift
       ;;
     --template-sysv-conf)
       # HELPDOC: Override System V conf template (default: 'node_deb.templates.sysv_conf' from package.json then built-in)
       zero_check "$value" "$param"
-      template_sysv="$param"
+      template_sysv="$value"
       shift
       ;;
     --template-upstart-conf)
       # HELPDOC: Override upstart conf template (default: 'node_deb.templates.upstart_conf' from package.json then built-in)
       zero_check "$value" "$param"
-      template_upstart="$param"
+      template_upstart="$value"
       shift
       ;;
     --urgency)
