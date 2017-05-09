@@ -19,6 +19,7 @@
       "executable": "templates/executable",
       "postinst": "templates/postinst",
       "postrm": "templates/postrm",
+      "preinst": "templates/preinst",
       "prerm": "templates/prerm",
       "systemd_service": "templates/systemd.service",
       "upstart_conf": "templates/upstart.conf"

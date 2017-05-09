@@ -242,6 +242,11 @@ test-node-deb-override-project() {
     is_success=0
   fi
 
+  if ! grep -q 'PREINST_OVERRIDE' "$output_dir/DEBIAN/preinst"; then
+    err 'preinst template override was wrong'
+    is_success=0
+  fi
+
   if ! grep -q 'SYSTEMD_SERVICE_OVERRIDE' "$output_dir/etc/systemd/system/overridden-package-name.service"; then
     err 'systemd.service template override was wrong'
     is_success=0
