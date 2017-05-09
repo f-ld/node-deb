@@ -508,7 +508,7 @@ if [ -z "$template_upstart" ]; then
   fi
 fi
 : ${template_upstart:="$node_deb_dir/templates/upstart.conf"}
-log_debug "The upstart template has been set to: $template_prerm"
+log_debug "The upstart template has been set to: $template_upstart"
 
 # Set sysv conf template
 if [ -z "$template_sysv" ]; then
@@ -518,7 +518,7 @@ if [ -z "$template_sysv" ]; then
   fi
 fi
 : ${template_sysv:="$node_deb_dir/templates/sysv"}
-log_debug "The sysv template has been set to: $template_prerm"
+log_debug "The sysv template has been set to: $template_sysv"
 
 deb_dir="${package_name}_${package_version}_all"
 
