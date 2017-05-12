@@ -79,6 +79,7 @@ npm_install() {
 
 addGroup '{{ node_deb_group }}' ''
 addUser '{{ node_deb_user }}' '' '{{ node_deb_group }}' '{{ node_deb_user }} user-daemon' '/bin/false'
+chown -R '{{ node_deb_user }}:{{ node_deb_group }}' '{{ node_deb_install_path }}'
 export -f npm_install
 su '{{ node_deb_user }}' -c "bash -l -c npm_install"
 
@@ -87,7 +88,6 @@ if ! [ -d '/var/log/{{ node_deb_package_name }}' ]; then
 fi
 
 chown -R '{{ node_deb_user }}:{{ node_deb_group }}' '/var/log/{{ node_deb_package_name }}'
-chown -R '{{ node_deb_user }}:{{ node_deb_group }}' '{{ node_deb_install_path }}'
 
 if [[ ! no_auto_start_stop ]]; then
   if [[ "$init_type" == 'auto' ]] || [[ "$init_type" == 'systemd' ]] || [[ "$init_type" == 'upstart' ]] || [[ "$init_type" == 'sysv' ]]; then
