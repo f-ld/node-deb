@@ -1,6 +1,6 @@
 {
   "name": "node-deb-pkg",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "Debian packaging for Node.js projects, fork of node-deb (https://github.com/heartsucker/node-deb) with additional features. Not intended to be maintained (but maybe merged one day)",
   "author": "fabien (https://github.com/f-ld)",
   "bin": {
